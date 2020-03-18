@@ -1,0 +1,47 @@
+#define LED_PIN 8
+#define INT_PIN 3
+int toggle = 1;
+int count = 0;
+void ISR_Callback()
+{
+  count ++;
+}
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(INT_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  
+  attachInterrupt(digitalPinToInterrupt(INT_PIN), ISR_Callback, FALLING);
+}
+
+void loop()
+{
+   
+  if(count == 0)
+  {
+    digitalWrite(LED_PIN, LOW);
+  }
+  else if((count%3) == 0)
+  {
+    digitalWrite(LED_PIN, HIGH);
+   delay(1500);
+   digitalWrite(LED_PIN, LOW);
+   delay(1500);
+  }
+  else if((count%3) == 1)
+  {
+    digitalWrite(LED_PIN, HIGH);
+   delay(500);
+   digitalWrite(LED_PIN, LOW);
+   delay(500);
+  }
+  else if((count%3) == 2)
+  {
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+  }
+  
+}
