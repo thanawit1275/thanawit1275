@@ -13,7 +13,7 @@ int channelBPin = 3;
 int delayCount = 0;
 int toggle = 1;
 int speed = 0;
-int setpoint;
+int setpoint = 0;
 int map7seg[10] = 
 {
   0b00111111, //0
@@ -75,6 +75,7 @@ void setup()
   pinMode(MOTOR_PIN_1, OUTPUT);
   pinMode(MOTOR_PIN_2, OUTPUT);
   pinMode(PWM_PIN, OUTPUT);
+  pinMode(A0, INPUT);
   pinMode(channelAPin, INPUT_PULLUP);
   pinMode(channelBPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(channelAPin),channelA_Callback, RISING);
@@ -85,11 +86,13 @@ void setup()
                   
 void loop()
 {
-   if(Serial.available())
-  {
-   speed = Serial.parseInt();
-   Serial.println(speed);
-  }
+  if(setpoint < 0)
+  {digitalWrite(ledPin,HIGH);}
+  else if(setpoint > 0)
+  {digitalWrite(ledPin,LOW);}
+  int error = setpoint - encoderCount;
+  int speed = 1.1*(float)(error);
+  
   if(speed > 0 && speed < 255)
   {
     moveFoward(speed);
@@ -106,22 +109,11 @@ void loop()
   {
     Serial.println("That speed does not damn exist");
   }
-  Serial.print("Direction: ");
-  Serial.print(encoderDir);   //Foward = 1, Backward = 0
-  Serial.print("  Position: ");
+ write7Segment(encoderCount);
+  Serial.print(setpoint);
+  Serial.print(",");
   Serial.println(encoderCount);
-  if(encoderCount < 0)
-  {
-    digitalWrite(ledPin, HIGH);
-  }
-  else
-  {
-    digitalWrite(ledPin, LOW);
-  }
-  int error = setpoint - encoderCount;
-  int control_value = 1.1 * (float)(error); 
-  write7Segment(encoderCount);
-  delay(1000);
+  delay(10);
   
 }
                   
