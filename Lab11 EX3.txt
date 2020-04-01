@@ -1,0 +1,144 @@
+#include<SPI.h>
+
+#define DATA_PIN 11
+#define CLK_PIN 12
+#define SS_PIN_1 10
+#define SS_PIN_2 9
+#define ledPin 12
+#define MOTOR_PIN_1 8
+#define MOTOR_PIN_2 7
+#define PWM_PIN 6
+int channelAPin = 2;
+int channelBPin = 3;
+int delayCount = 0;
+int toggle = 1;
+int speed = 0;
+int setpoint = 0;
+int map7seg[10] = 
+{
+  0b00111111, //0
+  0b00000110, //1
+  0b01011011, //2
+  0b01001111, //3
+  0b01100110, //4
+  0b01101101, //5
+  0b01111101, //6
+  0b00000111, //7
+  0b01111111, //8
+  0b01101111}; //9
+
+
+//volatile int encoderACount = 0;
+//volatile int encoderBCount = 0
+volatile int encoderCount = 0;
+volatile int encoderDir = 0;
+
+/*void serialEvent()
+{
+  setpoint = Serial.parseInt();
+}*/
+void moveFoward(int speed)
+{
+  digitalWrite(MOTOR_PIN_1, HIGH);
+  digitalWrite(MOTOR_PIN_2, LOW);
+  analogWrite(PWM_PIN, speed);
+}
+
+void moveBackward(int speed)
+{
+  digitalWrite(MOTOR_PIN_1, LOW);
+  digitalWrite(MOTOR_PIN_2, HIGH);
+  analogWrite(PWM_PIN, speed);
+}
+void spi_write_1(unsigned char cData)
+{
+  shiftOut(DATA_PIN, CLK_PIN, MSBFIRST, cData);
+  digitalWrite (SS_PIN_1, HIGH);
+  digitalWrite (SS_PIN_1, LOW);  
+}
+void spi_write_2(unsigned char cData)
+{
+  shiftOut(DATA_PIN, CLK_PIN, MSBFIRST, cData);
+  digitalWrite (SS_PIN_2, HIGH);
+  digitalWrite (SS_PIN_2, LOW);  
+}
+void write7Segment(unsigned char num)
+{
+  num = num*(-1);
+  spi_write_1(map7seg[num/1000]);
+  spi_write_2(map7seg[(num/100)%10]);
+}
+    
+void setup()
+{
+  pinMode(DATA_PIN, OUTPUT);
+  pinMode(CLK_PIN, OUTPUT);
+  pinMode(SS_PIN_1, OUTPUT);
+  pinMode(SS_PIN_2, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+  pinMode(MOTOR_PIN_1, OUTPUT);
+  pinMode(MOTOR_PIN_2, OUTPUT);
+  pinMode(PWM_PIN, OUTPUT);
+  pinMode(A0, INPUT);
+  pinMode(channelAPin, INPUT_PULLUP);
+  pinMode(channelBPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(channelAPin),channelA_Callback, RISING);
+  attachInterrupt(digitalPinToInterrupt(channelBPin),channelB_Callback, RISING); 
+  
+  Serial.begin(9600);
+}
+                  
+void loop()
+{
+  int setpoint = analogRead(A0);
+  if(setpoint < 0)
+  {digitalWrite(ledPin,HIGH);}
+  else if(setpoint > 0)
+  {digitalWrite(ledPin,LOW);}
+  int error = setpoint - encoderCount;
+  int speed = 1.1*(float)(error);
+  
+  if(speed > 0 && speed < 255)
+  {
+    moveFoward(speed);
+  }
+  else if(speed < 0 && speed > -255)
+  {
+    moveBackward(-speed);
+  }
+  else if(speed = 0)
+  {
+  	Serial.println("Nothing Happens Krub Ajarn");
+  }
+  else if (speed > 255 || speed < -255)
+  {
+    Serial.println("That speed does not damn exist");
+  }
+ write7Segment(encoderCount);
+  Serial.print(setpoint);
+  Serial.print(",");
+  Serial.println(encoderCount);
+  delay(10);
+  
+}
+                  
+void channelA_Callback()
+{
+   if(digitalRead(channelAPin) == 1 && digitalRead(channelBPin)== 0 )
+   {
+     encoderCount++;
+     
+     encoderDir = 1;
+   }
+}
+                  
+void channelB_Callback()
+{
+   if(digitalRead(channelAPin) == 0 && digitalRead(channelBPin)==1 )
+   {
+     encoderCount--;
+     
+     encoderDir = 0;
+   }
+}                  
+                    
