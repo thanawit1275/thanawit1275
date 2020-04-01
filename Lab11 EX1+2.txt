@@ -33,6 +33,10 @@ int map7seg[10] =
 volatile int encoderCount = 0;
 volatile int encoderDir = 0;
 
+void serialEvent()
+{
+    setpoint = Serial.parseInt();
+}
 void moveFoward(int speed)
 {
   digitalWrite(MOTOR_PIN_1, HIGH);
